@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TANRIC 2.0 · Prototype</title>
+<style>
+  :root {
+    --bg: #0f1417;
+    --panel: #161d22;
+    --panel-2: #1c252b;
+    --line: #2a363d;
+    --ink: #e6edf0;
+    --ink-dim: #8da1ab;
+    --accent: #4fd1c5;
+    --accent-2: #f6ad55;
+    --danger: #fc8181;
+    --good: #68d391;
+    --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+    --sans: "Spectral", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.5;
+    background-image: radial-gradient(circle at 12% 8%, #18242a 0, transparent 45%),
+                      radial-gradient(circle at 88% 92%, #161f2a 0, transparent 40%);
+    min-height: 100vh;
+  }
+  header {
+    padding: 28px 36px 22px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 22px; margin: 0; letter-spacing: .5px; font-weight: 600;
+  }
+  header h1 b { color: var(--accent); font-weight: 700; }
+  header .tag {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
+    border: 1px solid var(--line); padding: 3px 9px; border-radius: 20px;
+  }
+  header .tag b { color: var(--accent-2); }
+  .wrap { display: grid; grid-template-columns: 320px 1fr; gap: 0; min-height: calc(100vh - 92px); }
+  aside {
+    background: var(--panel); border-right: 1px solid var(--line);
+    padding: 24px 22px; display: flex; flex-direction: column; gap: 22px;
+  }
+  main { padding: 28px 36px; }
+  label { display: block; font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-dim);
+    margin-bottom: 7px; }
+  select, button {
+    width: 100%; background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+    font-family: var(--mono); font-size: 13px;
+  }
+  select:focus { outline: 1px solid var(--accent); }
+  .field { margin-bottom: 4px; }
+  .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-dim);
+    border-top: 1px dashed var(--line); padding-top: 16px; line-height: 1.8; }
+  .meta b { color: var(--accent); }
+  .meta .pill { display:inline-block; padding:1px 7px; border:1px solid var(--line);
+    border-radius: 10px; color: var(--ink); }
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 22px; }
+  .card { background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 14px; font-size: 14px; font-weight: 600; letter-spacing: .3px;
+    display:flex; align-items:center; gap: 8px; }
+  .card h3 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .stat-row { display: flex; justify-content: space-between; padding: 6px 0;
+    border-bottom: 1px dotted var(--line); font-family: var(--mono); font-size: 12.5px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .k { color: var(--ink-dim); }
+  .stat-row .v { color: var(--ink); font-weight: 600; }
+  .v.sig { color: var(--good); } .v.ns { color: var(--ink-dim); }
+  .verdict { margin-top: 12px; font-family: var(--mono); font-size: 11.5px;
+    padding: 8px 10px; border-radius: 7px; line-height: 1.55; }
+  .verdict.sig { background: rgba(104,211,145,.08); border: 1px solid rgba(104,211,145,.3); color: var(--good); }
+  .verdict.ns { background: rgba(141,161,171,.06); border: 1px solid var(--line); color: var(--ink-dim); }
+  .plot-card { background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px 20px; }
+  svg { width: 100%; height: auto; display: block; }
+  .legend { display:flex; gap: 18px; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-dim); margin-top: 6px; }
+  .legend i { display:inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; }
+  .loading { color: var(--ink-dim); font-family: var(--mono); font-size: 12px; padding: 40px; text-align:center; }
+  .err { color: var(--danger); font-family: var(--mono); font-size: 12px; padding: 14px; }
+  .backend-note { font-family: var(--mono); font-size: 10.5px; color: var(--ink-dim);
+    margin-top: auto; border-top: 1px dashed var(--line); padding-top: 14px; }
+  .backend-note b { color: var(--accent-2); }
+  .upload { border-top: 1px dashed var(--line); padding-top: 16px; }
+  .upload-row { margin-bottom: 9px; }
+  .upload input[type=text], .upload input:not([type]) {
+    width: 100%; background: var(--panel-2); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px;
+    font-family: var(--mono); font-size: 12px; }
+  .upload input[type=file] { width: 100%; color: var(--ink-dim); font-family: var(--mono);
+    font-size: 10.5px; }
+  .upload .filelabel { display:block; font-family: var(--mono); font-size: 10px;
+    color: var(--ink-dim); margin-bottom: 3px; }
+  #uploadBtn { margin-top: 4px; background: var(--accent-2); color: #1a1207;
+    font-weight: 700; border: none; cursor: pointer; }
+  #uploadBtn:disabled { opacity: .5; cursor: default; }
+  #uploadBtn:hover:not(:disabled) { filter: brightness(1.08); }
+  .upload-msg { font-family: var(--mono); font-size: 11px; margin-top: 9px; min-height: 14px; }
+  .upload-msg.ok { color: var(--good); } .upload-msg.bad { color: var(--danger); }
+  .upload-hint { font-family: var(--mono); font-size: 10px; color: var(--ink-dim);
+    margin-top: 6px; line-height: 1.5; }
+  .authbox { background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px; }
+  .authbox input { width: 100%; background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px;
+    font-family: var(--mono); font-size: 12px; }
+  #loginBtn { margin-top: 2px; background: var(--accent); color: #06201d;
+    font-weight: 700; border: none; cursor: pointer; }
+  #loginBtn:hover { filter: brightness(1.08); }
+  button.ghost { background: transparent; color: var(--ink-dim);
+    border: 1px solid var(--line); cursor: pointer; }
+  button.ghost:hover { color: var(--ink); }
+  .whoami { display: flex; align-items: center; gap: 10px; margin: 8px 0 12px;
+    font-family: var(--mono); font-size: 13px; color: var(--ink); }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent);
+    color: #06201d; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; }
+  code { color: var(--accent); }
+</style>
+</head>
+<body>
+  <header>
+    <h1><b>TANRIC</b> 2.0 <span style="color:var(--ink-dim);font-weight:400">· architecture prototype</span></h1>
+    <span class="tag">storage backend: <b id="backend">…</b></span>
+    <span class="tag">analysis: <b>My&nbsp;lncRNA</b> module</span>
+  </header>
+  <div class="wrap">
+    <aside>
+      <div class="authbox" id="authbox">
+        <div id="loggedOut">
+          <label>Sign in</label>
+          <div class="upload-row"><input id="username" placeholder="username" autocomplete="username" /></div>
+          <div class="upload-row"><input id="password" type="password" placeholder="password" autocomplete="current-password" /></div>
+          <button id="loginBtn">Sign in</button>
+          <div class="upload-msg" id="loginMsg"></div>
+          <div class="upload-hint">Without signing in you see public datasets only.</div>
+        </div>
+        <div id="loggedIn" style="display:none">
+          <label>Signed in</label>
+          <div class="whoami"><span class="avatar" id="avatar"></span><span id="displayName"></span></div>
+          <button id="logoutBtn" class="ghost">Sign out</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="dataset">Dataset</label>
+        <select id="dataset"></select>
+      </div>
+      <div class="field">
+        <label for="gene">lncRNA</label>
+        <select id="gene"></select>
+      </div>
+      <div class="meta" id="meta"></div>
+
+      <div class="upload" id="uploadPanel">
+        <label>Upload private dataset</label>
+        <div class="upload-row">
+          <input id="ds_id" placeholder="dataset id (e.g. my-study)" />
+        </div>
+        <div class="upload-row">
+          <span class="filelabel">expression table (.csv / .tsv / .parquet)</span>
+          <input type="file" id="expr_file" accept=".csv,.tsv,.tab,.txt,.parquet" />
+        </div>
+        <div class="upload-row">
+          <span class="filelabel">clinical table (.csv / .tsv / .parquet)</span>
+          <input type="file" id="clin_file" accept=".csv,.tsv,.tab,.txt,.parquet" />
+        </div>
+        <button id="uploadBtn">Upload to my private space</button>
+        <div class="upload-msg" id="uploadMsg"></div>
+        <div class="upload-hint" id="uploadHint"></div>
+      </div>
+
+      <div class="backend-note">
+        The same analysis code runs against whatever backend is configured via
+        <code>TANRIC_STORAGE</code>. Swap <b>local</b> (on-prem) for <b>object</b>
+        (cloud) with one env var — no code change.
+      </div>
+    </aside>
+    <main>
+      <div id="content"><div class="loading">Loading datasets…</div></div>
+    </main>
+  </div>
+
+<script>
+const $ = s => document.querySelector(s);
+// Session token returned by /api/login, sent as X-Session on every request.
+// In production this would be a secure HttpOnly cookie set by the server.
+let SESSION = '';
+let ME = null; // {user_id, display_name} when signed in
+function authHeaders() { return SESSION ? { 'X-Session': SESSION } : {}; }
+const api = (p) => fetch(p, { headers: authHeaders() })
+  .then(r => { if(!r.ok) return r.json().then(j=>Promise.reject(j.detail||r.status)); return r.json(); });
+
+async function init() {
+  try {
+    const h = await api('/api/health');
+    $('#backend').textContent = h.storage;
+    $('#loginBtn').onclick = doLogin;
+    $('#logoutBtn').onclick = doLogout;
+    $('#password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    $('#uploadBtn').onclick = doUpload;
+    renderAuth();
+    await loadDatasets();
+  } catch(e) { $('#content').innerHTML = `<div class="err">Init failed: ${e}</div>`; }
+}
+
+function renderAuth() {
+  const signedIn = !!ME;
+  $('#loggedOut').style.display = signedIn ? 'none' : 'block';
+  $('#loggedIn').style.display = signedIn ? 'block' : 'none';
+  if (signedIn) {
+    $('#displayName').textContent = ME.display_name;
+    $('#avatar').textContent = (ME.display_name || ME.user_id).slice(0,1).toUpperCase();
+  }
+  updateUploadPanel();
+}
+
+function updateUploadPanel() {
+  // Upload requires being signed in — mirrors the API returning 401 otherwise.
+  const anon = !ME;
+  $('#uploadBtn').disabled = anon;
+  $('#uploadHint').textContent = anon
+    ? 'Sign in to upload — anonymous users cannot upload (401).'
+    : `Stored privately under "${ME.user_id}". Other users cannot see or analyze it.`;
+}
+
+async function doLogin() {
+  const msg = $('#loginMsg');
+  const username = $('#username').value.trim(), password = $('#password').value;
+  if (!username || !password) { msg.className='upload-msg bad'; msg.textContent='Enter username and password.'; return; }
+  msg.className='upload-msg'; msg.textContent='Signing in…';
+  try {
+    const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password }) });
+    const j = await r.json();
+    if (!r.ok) throw j.detail || 'Login failed';
+    SESSION = j.session; ME = { user_id: j.user_id, display_name: j.display_name };
+    msg.textContent = ''; $('#password').value = '';
+    renderAuth();
+    await loadDatasets();
+  } catch(e) { msg.className='upload-msg bad'; msg.textContent = '' + e; }
+}
+
+async function doLogout() {
+  try { await fetch('/api/logout', { method:'POST', headers: authHeaders() }); } catch(e){}
+  SESSION = ''; ME = null;
+  $('#uploadMsg').textContent = '';
+  renderAuth();
+  await loadDatasets();
+}
+
+async function loadDatasets() {
+  const datasets = await api('/api/datasets');
+  const dsel = $('#dataset');
+  dsel.innerHTML = datasets.map(d =>
+    `<option value="${d.dataset_id}">${d.name}${d.visibility==='private'?' 🔒':''}</option>`).join('');
+  dsel.onchange = onDataset;
+  await onDataset();
+}
+
+async function doUpload() {
+  const id = $('#ds_id').value.trim();
+  const ef = $('#expr_file').files[0], cf = $('#clin_file').files[0];
+  const msg = $('#uploadMsg');
+  if (!id || !ef || !cf) { msg.className='upload-msg bad'; msg.textContent='Need a dataset id + both CSV files.'; return; }
+  msg.className='upload-msg'; msg.textContent='Uploading…';
+  const fd = new FormData();
+  fd.append('dataset_id', id); fd.append('name', id + ' (uploaded)');
+  fd.append('expression_file', ef); fd.append('clinical_file', cf);
+  try {
+    const r = await fetch('/api/datasets/upload', { method:'POST', headers: authHeaders(), body: fd });
+    const j = await r.json();
+    if (!r.ok) throw j.detail || r.status;
+    msg.className='upload-msg ok';
+    msg.textContent = `Stored "${j.dataset_id}" (${j.n_genes} genes × ${j.n_samples} samples).`;
+    await loadDatasets();
+    $('#dataset').value = id; await onDataset();
+  } catch(e) { msg.className='upload-msg bad'; msg.textContent = 'Upload failed: ' + e; }
+}
+
+async function onDataset() {
+  const ds = $('#dataset').value;
+  if (!ds) { $('#meta').innerHTML=''; $('#content').innerHTML='<div class="loading">No dataset.</div>'; return; }
+  const datasets = await api('/api/datasets');
+  const d = datasets.find(x => x.dataset_id === ds);
+  $('#meta').innerHTML = `
+    <div><b>${d.cancer_type}</b> · ${d.source}</div>
+    <div>${d.n_samples} samples · ${d.n_genes} lncRNAs</div>
+    <div style="margin-top:6px"><span class="pill">${d.visibility}${d.owner?(' · '+d.owner):''}</span></div>`;
+  const g = await api(`/api/datasets/${ds}/genes`);
+  const gsel = $('#gene');
+  gsel.innerHTML = g.genes.map(x => `<option value="${x}">${x}</option>`).join('');
+  if (g.genes.includes('ENSG00000272172')) gsel.value = 'ENSG00000272172';
+  gsel.onchange = runAnalyses;
+  await runAnalyses();
+}
+
+async function runAnalyses() {
+  const ds = $('#dataset').value, gene = $('#gene').value;
+  $('#content').innerHTML = '<div class="loading">Computing differential expression & survival…</div>';
+  try {
+    const [de, sv, ex] = await Promise.all([
+      api(`/api/datasets/${ds}/differential/${gene}`),
+      api(`/api/datasets/${ds}/survival/${gene}`),
+      api(`/api/datasets/${ds}/expression/${gene}`),
+    ]);
+    render(de, sv, ex, gene);
+  } catch(e) { $('#content').innerHTML = `<div class="err">${e}</div>`; }
+}
+
+function fmtP(p){ return p < 0.001 ? p.toExponential(2) : p.toFixed(3); }
+
+function render(de, sv, ex, gene) {
+  const deSig = de.p_value < 0.05, svSig = sv.logrank_p < 0.05;
+  const html = `
+  <div class="cards">
+    <div class="card">
+      <h3><span class="dot"></span>Differential Expression · tumor vs normal</h3>
+      <div class="stat-row"><span class="k">log₂ fold change</span><span class="v">${de.log2_fold_change}</span></div>
+      <div class="stat-row"><span class="k">fold change</span><span class="v">${de.fold_change}×</span></div>
+      <div class="stat-row"><span class="k">mean tumor / normal</span><span class="v">${de.mean_tumor} / ${de.mean_normal}</span></div>
+      <div class="stat-row"><span class="k">n tumor / normal</span><span class="v">${de.n_tumor} / ${de.n_normal}</span></div>
+      <div class="stat-row"><span class="k">p-value (Welch t)</span><span class="v ${deSig?'sig':'ns'}">${fmtP(de.p_value)}</span></div>
+      <div class="verdict ${deSig?'sig':'ns'}">${deSig
+        ? `Significantly ${de.log2_fold_change>0?'up':'down'}-regulated in tumour (p<0.05).`
+        : `No significant difference between tumour and normal.`}</div>
+    </div>
+    <div class="card">
+      <h3><span class="dot"></span>Survival · high vs low expressors</h3>
+      <div class="stat-row"><span class="k">split</span><span class="v">${sv.split}</span></div>
+      <div class="stat-row"><span class="k">n high / low</span><span class="v">${sv.n_high} / ${sv.n_low}</span></div>
+      <div class="stat-row"><span class="k">median surv. high</span><span class="v">${sv.median_survival_high ?? '—'} mo</span></div>
+      <div class="stat-row"><span class="k">median surv. low</span><span class="v">${sv.median_survival_low ?? '—'} mo</span></div>
+      <div class="stat-row"><span class="k">log-rank p</span><span class="v ${svSig?'sig':'ns'}">${fmtP(sv.logrank_p)}</span></div>
+      <div class="verdict ${svSig?'sig':'ns'}">${svSig
+        ? `Expression level significantly associated with survival (p<0.05).`
+        : `No significant survival association.`}</div>
+    </div>
+  </div>
+  <div class="plot-card">
+    <h3 style="margin:0 0 6px;font-size:14px">Kaplan–Meier survival curve · ${gene}</h3>
+    ${kmPlot(sv)}
+    <div class="legend">
+      <span><i style="background:var(--accent-2)"></i>high expression (n=${sv.n_high})</span>
+      <span><i style="background:var(--accent)"></i>low expression (n=${sv.n_low})</span>
+    </div>
+  </div>`;
+  $('#content').innerHTML = html;
+}
+
+function kmPlot(sv) {
+  const W=720, H=300, P=44;
+  const allT = [...sv.km_curves.high.time, ...sv.km_curves.low.time, 0];
+  const maxT = Math.max(...allT);
+  const x = t => P + (t/maxT)*(W-P-12);
+  const y = s => P/2 + (1-s)*(H-P-12);
+  const step = (c, color) => {
+    let d=`M ${x(0)} ${y(1)}`, prev=1;
+    for(let i=0;i<c.time.length;i++){ d+=` L ${x(c.time[i])} ${y(prev)} L ${x(c.time[i])} ${y(c.survival[i])}`; prev=c.survival[i]; }
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.2"/>`;
+  };
+  let grid='';
+  for(let s=0;s<=1.0001;s+=0.25){ grid+=`<line x1="${P}" y1="${y(s)}" x2="${W-12}" y2="${y(s)}" stroke="#2a363d" stroke-width="1"/><text x="${P-8}" y="${y(s)+4}" fill="#8da1ab" font-size="10" text-anchor="end" font-family="monospace">${s.toFixed(2)}</text>`; }
+  for(let t=0;t<=maxT;t+=Math.ceil(maxT/6/10)*10){ grid+=`<text x="${x(t)}" y="${H-P/2+16}" fill="#8da1ab" font-size="10" text-anchor="middle" font-family="monospace">${t}</text>`; }
+  return `<svg viewBox="0 0 ${W} ${H}">
+    ${grid}
+    <text x="14" y="${H/2}" fill="#8da1ab" font-size="10" font-family="monospace" transform="rotate(-90 14 ${H/2})" text-anchor="middle">survival probability</text>
+    <text x="${W/2}" y="${H-6}" fill="#8da1ab" font-size="10" font-family="monospace" text-anchor="middle">months</text>
+    ${step(sv.km_curves.low, 'var(--accent)')}
+    ${step(sv.km_curves.high, 'var(--accent-2)')}
+  </svg>`;
+}
+
+init();
+</script>
+</body>
+</html>

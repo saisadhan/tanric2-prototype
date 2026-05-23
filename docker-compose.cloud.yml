@@ -1,0 +1,62 @@
+# docker-compose for the CLOUD deployment demo.
+#
+# Brings up two services:
+#   minio   - an S3-compatible object store (stands in for AWS S3 / GCS)
+#   tanric  - the SAME app image, configured with TANRIC_STORAGE=object
+#
+# This proves the cloud path end-to-end on your laptop. Swapping MinIO for real
+# AWS S3 later is just a change of endpoint + credentials — no code change.
+#
+#   docker compose -f docker-compose.cloud.yml up --build
+#   # then: python scripts/seed_cloud.py   (seeds public data into the bucket)
+#   # open http://localhost:8000
+#
+version: "3.8"
+
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: tanric
+      MINIO_ROOT_PASSWORD: tanric-secret
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # MinIO web console (browse the bucket yourself)
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # One-shot: create the bucket once MinIO is up.
+  createbucket:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 4;
+      mc alias set local http://minio:9000 tanric tanric-secret;
+      mc mb --ignore-existing local/tanric-data;
+      echo 'bucket tanric-data ready';
+      "
+
+  tanric:
+    build: .
+    depends_on:
+      - createbucket
+    environment:
+      TANRIC_STORAGE: object
+      TANRIC_S3_BUCKET: tanric-data
+      TANRIC_S3_ENDPOINT: http://minio:9000
+      TANRIC_S3_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: tanric
+      AWS_SECRET_ACCESS_KEY: tanric-secret
+    ports:
+      - "8000:8000"
+
+volumes:
+  minio-data:
