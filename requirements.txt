@@ -1,6 +1,7 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pydantic>=2.7
+python-dotenv>=1.0     # loads .env configuration
 numpy>=1.26
 pandas>=2.2
 pyarrow>=16

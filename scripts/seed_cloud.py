@@ -27,9 +27,10 @@ import pandas as pd
 
 
 def main() -> None:
-    bucket = os.environ.get("TANRIC_S3_BUCKET", "tanric-data")
-    endpoint = os.environ.get("TANRIC_S3_ENDPOINT", "http://localhost:9000")
-    region = os.environ.get("TANRIC_S3_REGION", "us-east-1")
+    from tanric import config
+    bucket = config.S3_BUCKET or "tanric-data"
+    endpoint = config.S3_ENDPOINT or "http://localhost:9000"
+    region = config.S3_REGION or "us-east-1"
 
     s3 = boto3.client("s3", endpoint_url=endpoint, region_name=region)
 

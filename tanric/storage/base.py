@@ -1,3 +1,24 @@
+"""
+Storage abstraction layer.
+
+THIS MODULE IS THE SPINE OF THE PROTOTYPE.
+
+The single most important architectural decision for TANRIC 2.0 is to stop
+letting analysis code know *where* data physically lives. Every dataset is a
+small bundle of three objects (manifest.json, expression.parquet,
+clinical.parquet). A `StorageBackend` knows how to list datasets and read those
+objects. Nothing else in the system does.
+
+Consequences of this one decision:
+  - On-prem deployment   -> LocalStorageBackend (a directory on disk)
+  - Cloud deployment      -> ObjectStorageBackend (S3 / MinIO / GCS-compatible)
+  - Private user uploads  -> just another namespace handed to the same backend
+  - Maintainability        -> analysis + API are written once, against this interface
+
+To add a new deployment target (e.g. Azure Blob) you implement ONE class with
+four methods. No analysis code changes. That is the property the faculty asked
+for: "evolve it without rewriting everything."
+"""
 from __future__ import annotations
 
 import abc

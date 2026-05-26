@@ -75,7 +75,10 @@ and survival signals), so the engine returns real, non-trivial statistics.
 ```bash
 pip install -r requirements.txt
 
-# 1. generate synthetic public datasets
+# 1. configure: copy the example env file and adjust if needed
+cp .env.example .env        # defaults to on-prem/local mode, ready to run
+
+# 2. generate synthetic public datasets
 python scripts/generate_synthetic_data.py --out data/public
 
 # 2. run the API + UI (ON-PREM / local storage)

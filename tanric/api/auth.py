@@ -43,9 +43,12 @@ _USERS: dict[str, User] = {}
 
 
 def _seed_users() -> None:
+    from .. import config
     seed = [
-        ("saisadhan", "Sai Sadhan Saravanan", "sai-password"),
-        ("bob", "Bob (Lab B)", "bob-password"),
+        (config.SEED_USER_PRIMARY_ID, config.SEED_USER_PRIMARY_NAME,
+         config.SEED_USER_PRIMARY_PASSWORD),
+        (config.SEED_USER_SECONDARY_ID, config.SEED_USER_SECONDARY_NAME,
+         config.SEED_USER_SECONDARY_PASSWORD),
     ]
     for uid, name, pw in seed:
         _USERS[uid] = User(user_id=uid, display_name=name, password_hash=hash_password(pw))
@@ -55,7 +58,8 @@ _seed_users()
 
 
 # --- sessions -----------------------------------------------------------------------
-_SESSION_TTL_SECONDS = 60 * 60 * 8  # 8 hours
+from .. import config as _config
+_SESSION_TTL_SECONDS = _config.SESSION_TTL_SECONDS  # default 8h, override via .env
 # token -> (user_id, expires_at)
 _SESSIONS: dict[str, tuple[str, float]] = {}
 

@@ -24,8 +24,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# A small fixed panel of Ensembl-style lncRNA IDs. Real TANRIC tracks ~13k lncRNAs;
-# a few dozen is plenty to demonstrate the analysis engine.
+# A small fixed panel of Ensembl-style lncRNA IDs. A handful of dozen is plenty
+# to demonstrate the analysis engine.
 LNCRNA_IDS = [
     "ENSG00000228630",  # HOTAIR-like
     "ENSG00000245532",  # NEAT1-like
